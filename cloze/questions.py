@@ -45,13 +45,8 @@ class Question:
             raise Exception("Must provide solutions for all questions")
 
         points = 0
-
         for ans, q in zip(solution, self.solution_holders):
-            for sol in q.get_answer_values():
-                if float(sol.value) - float(sol.tolerance) <= ans <= float(sol.value) + float(sol.tolerance) :
-                    points += sol.points_ponder * q.points
-                else:
-                    points += 0
+            points += q.solve(ans)
         return points
 
     def __str__(self):
@@ -66,7 +61,7 @@ class Answer:
     def __init__(self, points_ponder, value, comment=None, tolerance=0):
         self.comment = comment
         self.value = value
-        self.points_ponder = points_ponder/100
+        self.points_ponder = points_ponder / 100
         self.tolerance = tolerance
 
     def __repr__(self):
@@ -102,11 +97,6 @@ class Solution:
 
     def separate_possible_answers(self, text: str):
         """
-        =Yes#Correct~No#We have a different opinion
-
-        moodle#Feedback for moodle in lower case
-            ~=MOODLE#Feedback for MOODLE in upper case
-            ~%50%Moodle#Feedback for only first letter in upper case
         :param text:
         :return:
         """
@@ -157,9 +147,8 @@ class Solution:
     def __repr__(self):
         return self.__str__()
 
-    def get_answer_values(self):
-        for ans in self.answers:
-            yield ans
+    def solve(self, solution):
+        raise NotImplementedError
 
 
 class ShortSolution(Solution):
@@ -172,7 +161,16 @@ class ShortSolutionC(ShortSolution):
 
 
 class Numerical(Solution):
-    pass
+    def solve(self, solution):
+        found_solution = False
+        for sol in self.answers:
+            # if correct answer is found
+            if sol.value != "*" and float(sol.value) - float(sol.tolerance) <= solution <= float(sol.value) + float(sol.tolerance):
+                return sol.points_ponder * self.points
+        # if correct answer is not found and * has it's own point ponder
+        if not found_solution and "*" in [x.value for x in self.answers]:
+            return sol.points_ponder * self.points
+        return 0
 
 
 class Multichoice(Solution):

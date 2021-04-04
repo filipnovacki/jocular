@@ -19,3 +19,8 @@ def test_example2_1():
 def test_example2_2():
     q = Question("{1:NUMERICAL:~%100%2:0}")
     assert q.solve([666]) == 0.0
+
+
+def test_example_negatives():
+    q = Question("{1:NUMERICAL:~%100%2:0~%-50%*}")
+    assert q.solve([666]) == -0.5
