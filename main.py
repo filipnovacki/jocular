@@ -1,5 +1,5 @@
-from cloze.questions import Question
-q = Question("pfdisa {2:NM:~%100%17:0} dsaf")
+from cloze.questions import ClozeQuestion
+q = ClozeQuestion("pfdisa {2:NM:~%100%17:0} dsaf")
 
 print(q.solve([7]))
 

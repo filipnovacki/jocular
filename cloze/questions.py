@@ -1,7 +1,7 @@
 import re
 
 
-class Question:
+class ClozeQuestion:
     """
     Contains whole text of a problem
     """
@@ -72,7 +72,7 @@ class Answer:
         return self.__repr__()
 
 
-class Solution:
+class Response:
     def __init__(self, text):
         self.original = text
         self.points = None
@@ -151,16 +151,16 @@ class Solution:
         raise NotImplementedError
 
 
-class ShortSolution(Solution):
+class ShortResponse(Response):
     # TODO: solve * as a wildcard for all incorrect answers
     pass
 
 
-class ShortSolutionC(ShortSolution):
+class ShortResponseC(ShortResponse):
     pass
 
 
-class Numerical(Solution):
+class NumericalResponse(Response):
     def solve(self, solution):
         found_solution = False
         for sol in self.answers:
@@ -173,11 +173,11 @@ class Numerical(Solution):
         return 0
 
 
-class Multichoice(Solution):
+class MultichoiceResponse(Response):
     pass
 
 
-class Multiresponse(Solution):
+class Multiresponse(Response):
     pass
 
 
@@ -205,12 +205,12 @@ def find_answer_type(string: str):
 
 
 _class_question_map = {
-    "SA": ShortSolution,
-    "SAC": ShortSolutionC,
-    "NM": Numerical,
-    "MC": Multichoice,
-    "MCV": Multichoice,
-    "MCH": Multichoice,
+    "SA": ShortResponse,
+    "SAC": ShortResponseC,
+    "NM": NumericalResponse,
+    "MC": MultichoiceResponse,
+    "MCV": MultichoiceResponse,
+    "MCH": MultichoiceResponse,
     "MR": Multiresponse,
     "MRH": Multiresponse,
 }
