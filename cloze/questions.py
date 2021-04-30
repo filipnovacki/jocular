@@ -1,75 +1,6 @@
 import re
-
-
-class ClozeQuestion:
-    """
-    Contains whole text of a problem
-    """
-
-    def __init__(self, text):
-        """
-        Initialises question from string
-        :param text: string of whole problem
-        """
-        self.original = text
-        self.solution_holders = []
-        self.question = "Blank question"
-        self.parse(text)
-
-    def parse(self, input_string: str):
-        """
-        Separates solutions from text and stores it in class instance
-        :param input_string: string of whole problem
-        :return:
-        """
-        regex = re.compile("{(.*?)}")
-        # list of answers contains all
-        solutions = regex.findall(input_string)
-        for ans in solutions:
-            # remove all solutions from question input
-            input_string = input_string.replace(ans, "")
-            # add specific Solution to solution_holder, ie creates list of Solutions
-            self.solution_holders.append(
-                find_answer_type(ans)
-            )
-        # store question that can be displayed
-        self.question = input_string
-
-    def solve(self, solution: list):
-        """
-        Takes solution and returns score for that answer
-        :param solution: answer in any data type that is appropriate
-        :return: score
-        """
-        if len(solution) != len(self.solution_holders):
-            raise Exception("Must provide solutions for all questions")
-
-        points = 0
-        for ans, q in zip(solution, self.solution_holders):
-            points += q.solve(ans)
-        return points
-
-    def __str__(self):
-        return "Question: " + self.question + \
-               "Solution:\n" + str(self.solution_holders)
-
-    def __repr__(self):
-        return self.__str__()
-
-
-class Answer:
-    def __init__(self, points_ponder, value, comment=None, tolerance=0):
-        self.comment = comment
-        self.value = value
-        self.points_ponder = points_ponder / 100
-        self.tolerance = tolerance
-
-    def __repr__(self):
-        return "\n\t\tAnswer {}, weights {}/100 points, comment {}, tolerance {}" \
-            .format(self.value, self.points_ponder, self.comment, self.tolerance)
-
-    def __str__(self):
-        return self.__repr__()
+from dataclasses import dataclass, field
+from typing import Any
 
 
 class Response:
@@ -151,6 +82,66 @@ class Response:
         raise NotImplementedError
 
 
+@dataclass
+class ClozeQuestion:
+    original: str
+    solution_holders: list[Response] = field(default_factory=list)
+    question: str = field(default="Blank question")
+
+    def __post_init__(self):
+        self.parse()
+
+    def parse(self):
+        """
+        Separates solutions from text and stores it in class instance
+        :return:
+        """
+        input_string = self.original
+        regex = re.compile("{(.*?)}")
+        # list of answers contains all
+        solutions = regex.findall(input_string)
+        solution_holders = []
+        for ans in solutions:
+            # remove all solutions from question input
+            input_string = input_string.replace(ans, "")
+            # add specific Solution to solution_holder, ie creates list of Solutions
+            solution_holders.append(
+                find_answer_type(ans)
+            )
+        # store question that can be displayed
+        self.question = input_string
+        return solution_holders
+
+    def solve(self, solution: list):
+        """
+        Takes solution and returns score for that answer
+        :param solution: answer in any data type that is appropriate
+        :return: score
+        """
+        if len(solution) != len(self.solution_holders):
+            raise Exception("Must provide solutions for all questions")
+
+        points = 0
+        for ans, q in zip(solution, self.solution_holders):
+            points += q.solve(ans)
+        return points
+
+
+class Answer:
+    def __init__(self, points_ponder, value, comment=None, tolerance=0):
+        self.comment = comment
+        self.value = value
+        self.points_ponder = points_ponder / 100
+        self.tolerance = tolerance
+
+    def __repr__(self):
+        return "\n\t\tAnswer {}, weights {}/100 points, comment {}, tolerance {}" \
+            .format(self.value, self.points_ponder, self.comment, self.tolerance)
+
+    def __str__(self):
+        return self.__repr__()
+
+
 class ShortResponse(Response):
     # TODO: solve * as a wildcard for all incorrect answers
     pass
@@ -165,7 +156,8 @@ class NumericalResponse(Response):
         found_solution = False
         for sol in self.answers:
             # if correct answer is found
-            if sol.value != "*" and float(sol.value) - float(sol.tolerance) <= solution <= float(sol.value) + float(sol.tolerance):
+            if sol.value != "*" and float(sol.value) - float(sol.tolerance) <= solution <= float(sol.value) + float(
+                    sol.tolerance):
                 return sol.points_ponder * self.points
         # if correct answer is not found and * has it's own point ponder
         if not found_solution and "*" in [x.value for x in self.answers]:
