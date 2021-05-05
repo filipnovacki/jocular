@@ -3,20 +3,38 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
-class Response:
-    def __init__(self, text):
-        self.original = text
-        self.points = None
-        self.answers = []
-        self.parse(text)
+@dataclass
+class Answer:
+    value: str
+    comment: str = field(default=None)
+    points_ponder: Any = field(default=1.0)
+    tolerance: float = field(default=0)
 
-    def parse(self, text):
+    def __post_init__(self):
+        if type(self.points_ponder) == int and 0 <= self.points_ponder <= 1:
+            self.points_ponder = float(self.points_ponder)
+        elif type(self.points_ponder) == int and not 0 <= self.points_ponder <= 1:
+            raise ValueError("Points ponder must be a value between 0 and 1")
+        elif type(self.points_ponder) not in (int, float):
+            raise TypeError("Points ponder must be a float")
+
+
+@dataclass
+class Response:
+    original: str
+    answers: list[Answer] = field(default=None)
+    points: int = field(default=None)
+
+    def __post_init__(self):
+        self.parse()
+
+    def parse(self):
         """
         Accepts whole string that comes between {} on cloze questions
         :param text: solution string (between {})
         :return:
         """
-        params = text.split(":")
+        params = self.original.split(":")
         try:
             # try getting points
             self.points = int(params[0])
@@ -24,7 +42,7 @@ class Response:
             # if no points, assume points are 0
             if params[0] == '':
                 self.points = 0
-        self.separate_possible_answers(params[2:])
+        self.answers = self.separate_possible_answers(params[2:])
 
     def separate_possible_answers(self, text: str):
         """
@@ -35,6 +53,7 @@ class Response:
         text_list = ":".join(text).split("~")
         # find point ponder %100%, %30%, %0%...
         regex_point_ponder = re.compile("%(.*?)%")
+        answers = []
         for ans in text_list:
             # avoid blank answers if answer starts with '~'
             if len(ans) == 0:
@@ -68,15 +87,8 @@ class Response:
                 tolerance = ans[1]
             except:
                 tolerance = 0
-            self.answers.append(Answer(points_ponder=point_ponder, value=value, comment=comment, tolerance=tolerance))
-
-    def __str__(self):
-        return "\n\nAnswer {}: ".format(self.__class__.__name__) + \
-               "\n\tPoints: " + str(self.points) + \
-               "\n\tSolution: " + str(self.answers)
-
-    def __repr__(self):
-        return self.__str__()
+            answers.append(Answer(points_ponder=point_ponder/100, value=value, comment=comment, tolerance=tolerance))
+        return answers
 
     def solve(self, solution):
         raise NotImplementedError
@@ -89,7 +101,7 @@ class ClozeQuestion:
     question: str = field(default="Blank question")
 
     def __post_init__(self):
-        self.parse()
+        self.solution_holders = self.parse()
 
     def parse(self):
         """
@@ -125,21 +137,6 @@ class ClozeQuestion:
         for ans, q in zip(solution, self.solution_holders):
             points += q.solve(ans)
         return points
-
-
-class Answer:
-    def __init__(self, points_ponder, value, comment=None, tolerance=0):
-        self.comment = comment
-        self.value = value
-        self.points_ponder = points_ponder / 100
-        self.tolerance = tolerance
-
-    def __repr__(self):
-        return "\n\t\tAnswer {}, weights {}/100 points, comment {}, tolerance {}" \
-            .format(self.value, self.points_ponder, self.comment, self.tolerance)
-
-    def __str__(self):
-        return self.__repr__()
 
 
 class ShortResponse(Response):
