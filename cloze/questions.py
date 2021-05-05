@@ -2,6 +2,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from cloze import templates
 from helpers.data_checking import _value_eval
 
 
@@ -97,6 +98,13 @@ class Response:
     def solve(self, solution):
         raise NotImplementedError
 
+    def encode(self):
+        """
+        Turn class structure into code
+        :return:
+        """
+        raise NotImplementedError
+
 
 @dataclass
 class ClozeQuestion:
@@ -164,6 +172,13 @@ class NumericalResponse(Response):
         if not found_solution and "*" in [x.value for x in self.answers]:
             return sol.points_ponder * self.points
         return 0
+
+    def encode(self):
+        return templates.fill_numerical(
+            catch_wrong=True,
+            points=self.points,
+            answers=self.answers
+        )
 
 
 class MultichoiceResponse(Response):

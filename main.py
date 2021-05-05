@@ -1,4 +1,6 @@
 from cloze.questions import ClozeQuestion
+from cloze.templates import fill_numerical
+
 q = ClozeQuestion("pfdisa {2:NM:~%100%17:0} dsaf")
 
 print(q.solve([7]))
@@ -14,3 +16,9 @@ print(q.solve([7]))
 # {:MULTICHOICE:=Yes#Correct~No#We have a different opinion} b) What grade would you give it?
 # {3:NUMERICAL:=3:2}
 # """))
+
+# print(numerical_response_template.render(weight="bla", question_type="NUMERICAL"))
+print(fill_numerical(points=3, answers=[
+    {"point_ponder": 1, "value": 2, "tolerance": 3, "comment": 'dsajfads'},
+    {"point_ponder": 0.53, "value": 1, "tolerance": 0.01, "comment": 'Komentar'},
+]))
