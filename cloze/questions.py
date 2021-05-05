@@ -2,6 +2,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from helpers.data_checking import _value_eval
+
 
 @dataclass
 class Answer:
@@ -11,12 +13,14 @@ class Answer:
     tolerance: float = field(default=0)
 
     def __post_init__(self):
-        if type(self.points_ponder) == int and 0 <= self.points_ponder <= 1:
-            self.points_ponder = float(self.points_ponder)
-        elif type(self.points_ponder) == int and not 0 <= self.points_ponder <= 1:
-            raise ValueError("Points ponder must be a value between 0 and 1")
-        elif type(self.points_ponder) not in (int, float):
-            raise TypeError("Points ponder must be a float")
+        # check values for points ponder
+        if 1 < self.points_ponder < 0 or type(self.points_ponder) != float:
+            if _value_eval(self.points_ponder, between=(0, 1), data_type=int):
+                self.points_ponder = float(self.points_ponder)
+            if _value_eval(self.points_ponder, between=(0, 100), data_type=int):
+                self.points_ponder = self.points_ponder/100.0
+            else:
+                raise ValueError
 
 
 @dataclass
