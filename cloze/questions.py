@@ -2,6 +2,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from bs4 import BeautifulSoup
+
 from cloze import templates
 from helpers.data_checking import _value_eval
 
@@ -73,7 +75,7 @@ class Response:
             if len(ans) == 0:
                 continue
             point_ponder, comment = None, None
-            # TODO remove HTML characters
+            ans = BeautifulSoup(ans, "lxml").text
             try:
                 # find point ponder
                 point_ponder = regex_point_ponder.match(ans).group()
