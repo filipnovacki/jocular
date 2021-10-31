@@ -8,10 +8,13 @@ from helpers.data_checking import _value_eval
 
 @dataclass
 class Answer:
+    """
+    Contains one possible answer for the question given
+    """
     value: str
     comment: str = field(default=None)
-    points_ponder: Any = field(default=1.0)
-    tolerance: float = field(default=0)
+    points_ponder: Any = field(default=1.0)  #
+    tolerance: float = field(default=0)  # answer tolerance for correct answers
 
     def __post_init__(self):
         # check values for points ponder
@@ -26,17 +29,22 @@ class Answer:
 
 @dataclass
 class Response:
+    """
+    Class that contains several Answers inside, this is what bears the answers
+    """
     original: str
     answers: list[Answer] = field(default=None)
     points: int = field(default=None)
 
     def __post_init__(self):
+        """
+        Starts parsing
+        """
         self.parse()
 
     def parse(self):
         """
         Accepts whole string that comes between {} on cloze questions
-        :param text: solution string (between {})
         :return:
         """
         params = self.original.split(":")
@@ -51,6 +59,7 @@ class Response:
 
     def separate_possible_answers(self, text: str):
         """
+        Turns long string of numbers into separate strings that contain nubmers
         :param text:
         :return:
         """
@@ -70,7 +79,7 @@ class Response:
                 point_ponder = regex_point_ponder.match(ans).group()
                 # remove point ponder from solution
                 ans = ans.replace(point_ponder, "")
-                # remove % from ponder and turn it to int
+                # remove % from ponder and turn it to int, point ponder is later turned to %
                 point_ponder = int(point_ponder[1:-1])
             except:
                 if len(ans) != 0 and ans[0] == "=":
@@ -95,7 +104,7 @@ class Response:
             answers.append(Answer(points_ponder=point_ponder/100, value=value, comment=comment, tolerance=tolerance))
         return answers
 
-    def solve(self, solution):
+    def check_solution(self, solution):
         raise NotImplementedError
 
     def encode(self):
@@ -108,11 +117,17 @@ class Response:
 
 @dataclass
 class ClozeQuestion:
+    """
+    Class that contains whole question and data about answers. This class should user use for inputing questions.
+    """
     original: str
     solution_holders: list[Response] = field(default_factory=list)
     question: str = field(default="Blank question")
 
     def __post_init__(self):
+        """
+        Starts parsing the whole question
+        """
         self.solution_holders = self.parse()
 
     def parse(self):
@@ -147,7 +162,7 @@ class ClozeQuestion:
 
         points = 0
         for ans, q in zip(solution, self.solution_holders):
-            points += q.solve(ans)
+            points += q.check_solution(ans)
         return points
 
 
@@ -161,7 +176,7 @@ class ShortResponseC(ShortResponse):
 
 
 class NumericalResponse(Response):
-    def solve(self, solution):
+    def check_solution(self, solution):
         found_solution = False
         for sol in self.answers:
             # if correct answer is found
