@@ -1,9 +1,37 @@
-from cloze.questions import ClozeQuestion
+import jsonpickle
+# from cloze.questions import ClozeQuestion
 from cloze.templates import fill_numerical
+from pprint import pprint
+from cloze.cloze_question import ClozeQuestion, ClozeResponse, ClozeAnswer, Numerical
 
-q = ClozeQuestion("pfdisa {2:NM:~%100%17:0} dsaf")
+q = ClozeQuestion("Koliko je {} + {}?")
+q.fill_question_parameters(5, 3)
+print(q)
 
-print(q.solve([7]))
+r = Numerical(10)
+for x in range(5):
+    ponder = 0
+    feedback = "Wrong"
+    is_correct = False
+    if x == 3:
+        ponder = 1
+        feedback = "Correct"
+        is_correct = True
+    ans = ClozeAnswer(answer_text=str(x+4), ponder=ponder, feedback=feedback, is_correct=is_correct)
+    r.add_possible_answer(ans)
+
+q.add_response(r)
+q.export()
+
+print(q.export_cloze_question())
+
+
+# q = ClozeQuestion("pfdisa {2:NM:~%100%17:0} dsaf")
+
+# q_pickle = jsonpickle.dumps(q)
+# print(q_pickle)
+
+# print(q.solve([7]))
 
 # print(Question("""
 # This question consists of some text with an answer embedded right here
@@ -18,7 +46,7 @@ print(q.solve([7]))
 # """))
 
 # print(numerical_response_template.render(weight="bla", question_type="NUMERICAL"))
-print(fill_numerical(points=3, answers=[
-    {"point_ponder": 1, "value": 2, "tolerance": 3, "comment": 'dsajfads'},
-    {"point_ponder": 0.53, "value": 1, "tolerance": 0.01, "comment": 'Komentar'},
-]))
+# print(fill_numerical(points=3, answers=[
+#     {"point_ponder": 1, "value": 2, "tolerance": 3, "comment": 'dsajfads'},
+#     {"point_ponder": 0.53, "value": 1, "tolerance": 0.01, "comment": 'Komentar'},
+# ]))

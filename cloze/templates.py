@@ -4,21 +4,25 @@ numerical_response_template = Template("""\
 { {{- points -}} : {{- question_type -}} : 
 {%- for answer in answers -%} 
     ~ 
-    {%- if answer.points_ponder -%} 
-        % {{- (answer.points_ponder * 100) | int -}} % 
+    {%- if answer.is_correct -%}
+        =
+    {%- endif -%}
+    {%- if answer.ponder -%} 
+        % {{- (answer.ponder * 100) | int -}} % 
     {%- endif -%} 
-    {{- answer.value -}} : {{- answer.tolerance -}} 
-    {%- if answer.comment -%}
-        # {{- answer.comment -}} 
+    {{- answer.answer_text -}} : {{- answer.tolerance -}} 
+    {%- if answer.feedback -%}
+        # {{- answer.feedback -}} 
     {%- endif -%}
 {%- endfor -%} 
 }""")
 
 
-def fill_numerical(catch_wrong=False, points=None, answers=None, **kwargs):
+def fill_numerical(catch_wrong=False, points=None, answers=None, question_type=None, **kwargs):
     """
     Fills NUMERICAL template with values provided. Returns string.
 
+    :par
     :param answers: (array of dicts):
         - value
         - point_ponder (optional)
@@ -30,11 +34,9 @@ def fill_numerical(catch_wrong=False, points=None, answers=None, **kwargs):
     :return: string of rendered answers
     """
     return numerical_response_template.render(
-        question_type="NUMERICAL",
+        question_type=question_type,
         catch_wrong=catch_wrong,
         points=points,
         answers=answers,
         **kwargs
     )
-
-

@@ -1,6 +1,6 @@
 import re
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Iterable
 
 from bs4 import BeautifulSoup
 
@@ -15,7 +15,7 @@ class Answer:
     """
     value: str
     comment: str = field(default=None)
-    points_ponder: Any = field(default=1.0)  #
+    points_ponder: Any = field(default=1.0)
     tolerance: float = field(default=0)  # answer tolerance for correct answers
 
     def __post_init__(self):
@@ -67,44 +67,42 @@ class Response:
         """
         # join in case there are ":" values in answers and then split by ~
         text_list = ":".join(text).split("~")
-        # find point ponder %100%, %30%, %0%...
-        regex_point_ponder = re.compile("%(.*?)%")
         answers = []
-        for ans in text_list:
-            # avoid blank answers if answer starts with '~'
-            if len(ans) == 0:
+        for answer in text_list:
+            if not answer:
                 continue
-            point_ponder, comment = None, None
-            ans = BeautifulSoup(ans, "lxml").text
-            try:
-                # find point ponder
-                point_ponder = regex_point_ponder.match(ans).group()
-                # remove point ponder from solution
-                ans = ans.replace(point_ponder, "")
-                # remove % from ponder and turn it to int, point ponder is later turned to %
-                point_ponder = int(point_ponder[1:-1])
-            except:
-                if len(ans) != 0 and ans[0] == "=":
-                    # = doesn't work with shortanswer and it is synonimous with %100%
-                    point_ponder = 100
-                    # remove ponder from ans
-                    ans = ans[1:]
-                else:
-                    print("I failed when looking for point ponder and ans for question '{}'".format(self.original))
-            try:
-                comment = ans[ans.index("#") + 1:]
-                # remove comment from ans
-                ans = ans.replace("#" + comment, "")
-            except:
-                comment = None
-            ans = ans.split(":")
-            value = ans[0]
-            try:
-                tolerance = ans[1]
-            except:
-                tolerance = 0
-            answers.append(Answer(points_ponder=point_ponder/100, value=value, comment=comment, tolerance=tolerance))
+            answers += [ans for ans in self.answers_from_string(answer)]
         return answers
+
+    def answers_from_string(self, answer: str) -> Iterable[Answer]:
+        answer = BeautifulSoup(answer, "lxml").text
+
+        # find point ponder. format: %50%, %100%, %0%...
+        point_ponder_string = re.compile("%(.*?)%").match(answer).group() or "%100%"
+        point_ponder = int(point_ponder_string[1:-1])
+        answer = answer.replace(point_ponder_string, "")
+
+        try:
+            comment = answer[answer.index("#") + 1:]
+            answer = answer.replace("#" + comment, "")
+        except ValueError:
+            comment = None
+
+        answer = answer.split(":")
+        value = answer[0]
+
+        try:
+            tolerance = answer[1]
+        except IndexError:
+            tolerance = 0
+
+        yield Answer(
+            points_ponder=point_ponder/100,
+            value=value,
+            comment=comment,
+            tolerance=tolerance
+        )
+
 
     def check_solution(self, solution):
         raise NotImplementedError

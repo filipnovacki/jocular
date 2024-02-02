@@ -6,6 +6,16 @@ def test_example1_1():
     assert q.solve([17]) == 2.0
 
 
+def test_example1_12():
+    q = ClozeQuestion("This has answer 17 with 1 tolerance: {2:NM:~%100%17:1}")
+    assert q.solve([16]) == 2.0
+
+
+def test_example1_12():
+    q = ClozeQuestion("This has answer 17 with 1 tolerance: {2:NM:~%100%17:1}")
+    assert q.solve([18]) == 2.0
+
+
 def test_example1_2():
     q = ClozeQuestion("This has answer 17 with 0 tolerance: {2:NM:~%100%17:0}")
     assert q.solve([3]) == 0
