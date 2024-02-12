@@ -1,12 +1,14 @@
 import jsonpickle
 # from cloze.questions import ClozeQuestion
-from cloze.templates import fill_numerical
+# from cloze.templates import fill_numerical
 from pprint import pprint
 from cloze.cloze_question import ClozeQuestion, ClozeResponse, ClozeAnswer, Numerical
+from cloze.cloze import RenderType
 
 q = ClozeQuestion("Koliko je {} + {}?")
 q.fill_question_parameters(5, 3)
 print(q)
+
 
 r = Numerical(10)
 for x in range(5):
@@ -19,11 +21,14 @@ for x in range(5):
         is_correct = True
     ans = ClozeAnswer(answer_text=str(x+4), ponder=ponder, feedback=feedback, is_correct=is_correct)
     r.add_possible_answer(ans)
-
 q.add_response(r)
-q.export()
 
-print(q.export_cloze_question())
+x = q.render(render_type=RenderType.HTML)
+print(x)
+#
+# q.export()
+#
+# print(q.export_cloze_question())
 
 
 # q = ClozeQuestion("pfdisa {2:NM:~%100%17:0} dsaf")

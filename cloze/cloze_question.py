@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 
-from cloze.cloze import Cloze
-from cloze.templates import fill_numerical
+from cloze.cloze import Cloze, RenderType
+from cloze.templates import html_render_template
+from cloze.templates.cloze_render_template import fill_numerical
 
 
 @dataclass
@@ -27,7 +28,7 @@ class ClozeResponse(Cloze):
 
 
 class Numerical(ClozeResponse):
-    question_type = "NUMERICAL"
+    question_type = field(default="NUMERICAL")
 
     def add_possible_answer(self, answer: ClozeAnswer):
         float(answer.answer_text)  # check if answer text is number-like
@@ -55,3 +56,15 @@ class ClozeQuestion(Cloze):
         for response in self.responses:
             responses_text += response.export_cloze_response()
         return responses_text
+
+    def render(self, render_type: RenderType = RenderType.HTML):
+        if render_type == RenderType.HTML:
+            if not self._is_running_in_jupyter() and False:
+                return "Can't render because not running in Jupyter"
+            from IPython import display
+
+            rendered_template = html_render_template.render_html(self)
+            return display.HTML(rendered_template)
+
+        elif render_type == RenderType.PLAIN:
+            return "This is plain text render"
